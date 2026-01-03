@@ -11,7 +11,7 @@ dependencies {
     testImplementation(libs.aws.sdk.ddb)
 
     // DynamoDB Local for testing
-    testImplementation("com.amazonaws:DynamoDBLocal:2.5.2")
+    testImplementation("com.amazonaws:DynamoDBLocal:2.6.1")
 
     // SQLite for DynamoDB Local (required dependency)
     testImplementation("com.almworks.sqlite4java:sqlite4java:1.0.392")
@@ -36,7 +36,7 @@ dependencies {
 
     // SLF4J logging (logback is a runtime dependency usually)
     testImplementation(libs.slf4j.api)
-    testRuntimeOnly("ch.qos.logback:logback-classic:1.5.16")
+    testRuntimeOnly("ch.qos.logback:logback-classic:1.5.23")
 
     // Immutables
     testCompileOnly(libs.immutables.annotations)
