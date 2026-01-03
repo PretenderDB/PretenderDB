@@ -147,28 +147,6 @@ Database setup follows this pattern:
    - Individual changesets: `liquibase/db-001.xml`, `liquibase/db-002.xml`, etc.
 4. **DAOs**: Use JDBI's SqlObject pattern with interfaces
 
-### Metrics
-
-The project uses codehead-metrics with declarative metrics via AspectJ:
-
-1. **Declarative Metrics**: Annotate methods with `@Metrics`
-2. **AspectJ Weaving**: Build file must include AspectJ post-compile weaving plugin
-3. **Automatic Tags**: All metrics include `host`, `stage`, `endpoint`, and `status` tags
-4. **Request Filters**: `MetricTagsResource` adds request/response context to metrics
-
-When adding metrics to a module:
-```kotlin
-// In build.gradle.kts
-plugins {
-    id("io.freefair.aspectj.post-compile-weaving") version "9.1.0"
-}
-
-dependencies {
-    implementation(libs.codehead.metrics.declarative)
-    aspect(libs.codehead.metrics.declarative)
-}
-```
-
 ### Testing Patterns
 
 1. **Unit Tests**: Use Mockito with `@ExtendWith(MockitoExtension.class)`
@@ -205,7 +183,7 @@ Standard Maven structure:
 
 Package naming convention:
 ```
-com.codeheadsystems.<module>.<layer>
+io.github.pretenderdb.<module>.<layer>
 ```
 
 Layers: `component`, `module`, `dao`, `manager`, `resource`, `converter`, `model`, `exception`

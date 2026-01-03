@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -226,7 +227,7 @@ class PdbItemManagerTest {
     when(itemDao.get(eq(ITEM_TABLE_NAME), eq("123"), any()))
         .thenReturn(Optional.of(pdbItem));
     when(attributeValueConverter.fromJson(pdbItem.attributesJson())).thenReturn(fullItem);
-    when(itemConverter.applyProjection(fullItem, "name")).thenReturn(projectedItem);
+    when(itemConverter.applyProjection(any(), eq("name"), any())).thenReturn(projectedItem);
 
     final GetItemRequest request = GetItemRequest.builder()
         .tableName(TABLE_NAME)

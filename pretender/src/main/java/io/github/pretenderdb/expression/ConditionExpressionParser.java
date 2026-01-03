@@ -98,26 +98,26 @@ public class ConditionExpressionParser {
       return !evaluateCondition(item, innerCondition, values, names);
     }
 
-    // Try to split on OR (lowest precedence) - but not within BETWEEN
+    // Try to split on OR (lowest precedence) - but not within BETWEEN or parentheses
     final Pattern orPattern = Pattern.compile("\\s+(?i)or\\s+");
     Matcher orMatcher = orPattern.matcher(trimmed);
     while (orMatcher.find()) {
-      // Check if this OR is not within a BETWEEN expression
+      // Check if this OR is not within a BETWEEN expression or parentheses
       final String beforeOr = trimmed.substring(0, orMatcher.start());
-      if (!isWithinBetween(beforeOr, trimmed)) {
+      if (!isWithinBetween(beforeOr, trimmed) && !isWithinParentheses(trimmed, orMatcher.start())) {
         final String left = trimmed.substring(0, orMatcher.start()).trim();
         final String right = trimmed.substring(orMatcher.end()).trim();
         return evaluateCondition(item, left, values, names) || evaluateCondition(item, right, values, names);
       }
     }
 
-    // Try to split on AND (higher precedence than OR) - but not within BETWEEN
+    // Try to split on AND (higher precedence than OR) - but not within BETWEEN or parentheses
     final Pattern andPattern = Pattern.compile("\\s+(?i)and\\s+");
     Matcher andMatcher = andPattern.matcher(trimmed);
     while (andMatcher.find()) {
-      // Check if this AND is not within a BETWEEN expression
+      // Check if this AND is not within a BETWEEN expression or parentheses
       final String beforeAnd = trimmed.substring(0, andMatcher.start());
-      if (!isWithinBetween(beforeAnd, trimmed)) {
+      if (!isWithinBetween(beforeAnd, trimmed) && !isWithinParentheses(trimmed, andMatcher.start())) {
         final String left = trimmed.substring(0, andMatcher.start()).trim();
         final String right = trimmed.substring(andMatcher.end()).trim();
         return evaluateCondition(item, left, values, names) && evaluateCondition(item, right, values, names);
@@ -150,6 +150,22 @@ public class ConditionExpressionParser {
       }
     }
     return true;
+  }
+
+  /**
+   * Checks if a position in the expression is within parentheses.
+   * Returns true if the position is inside any set of parentheses.
+   */
+  private boolean isWithinParentheses(final String expression, final int position) {
+    int depth = 0;
+    for (int i = 0; i < position && i < expression.length(); i++) {
+      if (expression.charAt(i) == '(') {
+        depth++;
+      } else if (expression.charAt(i) == ')') {
+        depth--;
+      }
+    }
+    return depth > 0;
   }
 
   /**
@@ -325,6 +341,11 @@ public class ConditionExpressionParser {
       final double n1 = Double.parseDouble(v1.n());
       final double n2 = Double.parseDouble(v2.n());
       return Double.compare(n1, n2);
+    }
+
+    // Boolean comparison
+    if (v1.bool() != null && v2.bool() != null) {
+      return Boolean.compare(v1.bool(), v2.bool());
     }
 
     // Binary comparison

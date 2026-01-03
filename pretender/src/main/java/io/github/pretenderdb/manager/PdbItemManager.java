@@ -241,7 +241,8 @@ public class PdbItemManager {
 
     // Apply projection if present
     if (request.projectionExpression() != null && !request.projectionExpression().isBlank()) {
-      item = itemConverter.applyProjection(item, request.projectionExpression());
+      item = itemConverter.applyProjection(item, request.projectionExpression(),
+          request.expressionAttributeNames());
     }
 
     // Build response with optional consumed capacity
@@ -291,6 +292,24 @@ public class PdbItemManager {
       currentAttributes = new HashMap<>(request.key());
     }
 
+    // Check condition expression if provided (must be evaluated BEFORE applying update)
+    if (request.conditionExpression() != null && !request.conditionExpression().isBlank()) {
+      // Evaluate condition against existing item (use currentAttributes, or null if item doesn't exist)
+      final Map<String, AttributeValue> itemToCheck = existingPdbItem.isPresent() ? currentAttributes : null;
+      final boolean conditionMet = conditionExpressionParser.evaluate(
+          itemToCheck,
+          request.conditionExpression(),
+          request.expressionAttributeValues(),
+          request.expressionAttributeNames()
+      );
+
+      if (!conditionMet) {
+        throw ConditionalCheckFailedException.builder()
+            .message("The conditional request failed")
+            .build();
+      }
+    }
+
     // Apply update expression
     final Map<String, AttributeValue> updatedAttributes = updateExpressionParser.applyUpdate(
         currentAttributes,
@@ -332,7 +351,12 @@ public class PdbItemManager {
       itemDao.insert(itemTableName(tableName), updatedPdbItem);
     }
 
-    // Maintain GSI tables
+    // Update GSI tables: delete old entries if item existed, then maintain new entries
+    if (existingPdbItem.isPresent()) {
+      // Delete old GSI entries (using old attribute values before update)
+      deleteFromGsiTables(metadata, currentAttributes);
+    }
+    // Maintain new GSI tables (insert/update with new attribute values)
     maintainGsiTables(metadata, updatedAttributes, updatedPdbItem);
 
     // Build response
@@ -542,7 +566,8 @@ public class PdbItemManager {
 
       // Apply projection if present
       if (request.projectionExpression() != null && !request.projectionExpression().isBlank()) {
-        attributes = itemConverter.applyProjection(attributes, request.projectionExpression());
+        attributes = itemConverter.applyProjection(attributes, request.projectionExpression(),
+            request.expressionAttributeNames());
       }
 
       resultAttributeMaps.add(attributes);
@@ -551,7 +576,8 @@ public class PdbItemManager {
     // Build response
     final QueryResponse.Builder responseBuilder = QueryResponse.builder()
         .items(resultAttributeMaps)
-        .count(resultAttributeMaps.size());
+        .count(resultAttributeMaps.size())
+        .scannedCount(resultItems.size());
 
     // Add LastEvaluatedKey if there are more results
     if (hasMore) {
@@ -653,7 +679,8 @@ public class PdbItemManager {
 
       // Apply projection if present
       if (request.projectionExpression() != null && !request.projectionExpression().isBlank()) {
-        attributes = itemConverter.applyProjection(attributes, request.projectionExpression());
+        attributes = itemConverter.applyProjection(attributes, request.projectionExpression(),
+            request.expressionAttributeNames());
       }
 
       resultAttributeMaps.add(attributes);
@@ -662,7 +689,8 @@ public class PdbItemManager {
     // Build response
     final ScanResponse.Builder responseBuilder = ScanResponse.builder()
         .items(resultAttributeMaps)
-        .count(resultAttributeMaps.size());
+        .count(resultAttributeMaps.size())
+        .scannedCount(resultItems.size());
 
     // Add LastEvaluatedKey if there are more results
     if (hasMore) {
