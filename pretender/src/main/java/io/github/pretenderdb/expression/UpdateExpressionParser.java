@@ -44,6 +44,8 @@ public class UpdateExpressionParser {
       "if_not_exists\\s*\\(\\s*(.+?)\\s*,\\s*(.+?)\\s*\\)");
   private static final Pattern NUMERIC_ADD_PATTERN = Pattern.compile(
       "(#?\\w+)\\s*\\+\\s*(.+)");
+  private static final Pattern NUMERIC_SUBTRACT_PATTERN = Pattern.compile(
+      "(#?\\w+)\\s*-\\s*(.+)");
 
   /**
    * Instantiates a new Update expression parser.
@@ -126,6 +128,14 @@ public class UpdateExpressionParser {
       if (numericAddMatcher.matches()) {
         applyNumericAdd(item, attrName, numericAddMatcher.group(1).trim(),
             numericAddMatcher.group(2).trim(), values, names);
+        continue;
+      }
+
+      // Check for numeric subtraction (attr - value)
+      final Matcher numericSubtractMatcher = NUMERIC_SUBTRACT_PATTERN.matcher(valueExpr);
+      if (numericSubtractMatcher.matches()) {
+        applyNumericSubtract(item, attrName, numericSubtractMatcher.group(1).trim(),
+            numericSubtractMatcher.group(2).trim(), values, names);
         continue;
       }
 
@@ -292,6 +302,30 @@ public class UpdateExpressionParser {
 
     final BigDecimal sum = new BigDecimal(current.n()).add(new BigDecimal(addValue.n()));
     item.put(attrName, AttributeValue.builder().n(sum.toString()).build());
+  }
+
+  /**
+   * Apply numeric subtraction.
+   */
+  private void applyNumericSubtract(final Map<String, AttributeValue> item,
+                                    final String attrName,
+                                    final String operandExpr,
+                                    final String subtractValueExpr,
+                                    final Map<String, AttributeValue> values,
+                                    final Map<String, String> names) {
+    final String operandAttr = resolveAttributeName(operandExpr, names);
+    final AttributeValue current = item.get(operandAttr);
+    final AttributeValue subtractValue = resolveValue(subtractValueExpr, values);
+
+    if (current == null || current.n() == null) {
+      throw new IllegalArgumentException("Cannot subtract from non-numeric attribute: " + operandAttr);
+    }
+    if (subtractValue.n() == null) {
+      throw new IllegalArgumentException("SUBTRACT value must be numeric");
+    }
+
+    final BigDecimal difference = new BigDecimal(current.n()).subtract(new BigDecimal(subtractValue.n()));
+    item.put(attrName, AttributeValue.builder().n(difference.toString()).build());
   }
 
   /**

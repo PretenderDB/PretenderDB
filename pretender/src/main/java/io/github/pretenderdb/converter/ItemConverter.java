@@ -129,7 +129,13 @@ public class ItemConverter {
    */
   public Map<String, AttributeValue> applyProjection(final Map<String, AttributeValue> item,
                                                      final String projectionExpression) {
-    log.trace("applyProjection({}, {})", item, projectionExpression);
+    return applyProjection(item, projectionExpression, null);
+  }
+
+  public Map<String, AttributeValue> applyProjection(final Map<String, AttributeValue> item,
+                                                     final String projectionExpression,
+                                                     final Map<String, String> expressionAttributeNames) {
+    log.trace("applyProjection({}, {}, {})", item, projectionExpression, expressionAttributeNames);
 
     if (projectionExpression == null || projectionExpression.isBlank()) {
       return item;
@@ -138,6 +144,7 @@ public class ItemConverter {
     // Parse projection expression (simple comma-separated for now)
     final String[] projectedAttributes = Arrays.stream(projectionExpression.split(","))
         .map(String::trim)
+        .map(attr -> resolveAttributeName(attr, expressionAttributeNames))
         .toArray(String[]::new);
 
     // Filter item to only include projected attributes
@@ -147,5 +154,12 @@ public class ItemConverter {
             attr -> attr,
             item::get
         ));
+  }
+
+  private String resolveAttributeName(final String expr, final Map<String, String> names) {
+    if (names != null && expr.startsWith("#")) {
+      return names.getOrDefault(expr, expr);
+    }
+    return expr;
   }
 }
