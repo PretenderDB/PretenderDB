@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright (c) 2023. Ned Wolpert
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+		http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Add DynamoDB Streams support -->
+    <changeSet id="2025-01-01-01" author="claude">
+        <comment>Add DynamoDB Streams columns to PDB_TABLE</comment>
+
+        <!-- Stream enabled flag -->
+        <addColumn tableName="PDB_TABLE">
+            <column name="STREAM_ENABLED" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <!-- Stream view type (KEYS_ONLY, NEW_IMAGE, OLD_IMAGE, NEW_AND_OLD_IMAGES) -->
+        <addColumn tableName="PDB_TABLE">
+            <column name="STREAM_VIEW_TYPE" type="varchar(32)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <!-- Stream ARN -->
+        <addColumn tableName="PDB_TABLE">
+            <column name="STREAM_ARN" type="varchar(512)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <!-- Stream label (timestamp-based identifier) -->
+        <addColumn tableName="PDB_TABLE">
+            <column name="STREAM_LABEL" type="varchar(128)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>
