@@ -25,6 +25,7 @@ pretender → database-utils
 ### Developer requirements
 - Always run a full clean build and test of the whole project before even writing a commit.
 - Ensure tests are meaningful. Do not test getters/setters or trivial code.
+- When looking at integration tests, assume DynamoDB Local jar is correct and pretender is doing something wrong if they differ.
 
 ## Build Commands
 
