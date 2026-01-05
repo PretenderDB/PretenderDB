@@ -10,16 +10,13 @@ This is a multi-module Gradle project demonstrating a complete Dropwizard server
 
 The project consists of 5 modules with specific purposes:
 
-- **api**: REST API contracts using JAX-RS interfaces and Immutables-based data models
-- **server-base**: Reusable Dropwizard framework with Dagger integration, metrics, and resource/health check initialization
 - **database-utils**: JDBI factory and Liquibase integration utilities
 - **pretender**: DynamoDB-compatible client that uses SQL databases (PostgreSQL/HSQLDB) as backend for local development
-- **keys-server**: Main application implementing key generation and storage service
+- **pretender-integ**: Testing code that only knows about the DynamoDB client, but can work against any implementation.
 
 Module dependencies:
 ```
-keys-server → api, server-base, database-utils
-pretender → database-utils
+pretender-integ → pretender → database-utils
 ```
 
 ### Developer requirements
@@ -119,15 +116,6 @@ The project uses Dagger 2 for compile-time dependency injection:
    - Use `@IntoSet` for contributing single items
    - Use `@Multibinds` for declaring empty sets
 
-### Server-Base Framework
-
-Applications extend the `Server<T extends ServerConfiguration>` abstract class:
-
-1. Create a configuration class extending `ServerConfiguration`
-2. Create a Dagger component extending `DropWizardComponent`
-3. Implement `Server.setupComponent()` to build the Dagger component
-4. Jersey resources implement both the API interface and `JerseyResource` marker
-
 ### Immutables Pattern
 
 All data models use Immutables for immutable value objects:
@@ -201,46 +189,7 @@ The `pretender` module provides a DynamoDB-compatible client backed by SQL:
 ## Common Development Workflow
 
 1. Make code changes in appropriate module
-2. Run tests: `./gradlew :module-name:test`
-3. Check coverage: `./gradlew :module-name:jacocoTestReport`
-4. Build module: `./gradlew :module-name:build`
-5. For keys-server changes, test locally: `./gradlew :keys-server:run --args="server config.yml"`
-
-## Violet (Rust Client)
-
-The `violet/` directory contains a Rust-based envelope encryption client that integrates with the Keys server.
-
-### Structure
-- **violet-core**: Crypto primitives (AES-256-GCM, AES-256-GCM-SIV) and envelope encryption logic
-- **violet-client**: HTTP client for Keys server REST API
-- **violet-cli**: Command-line interface for encryption/decryption
-- **violet-daemon**: Unix socket daemon for IPC
-
-### Building Violet
-```bash
-cd violet
-cargo build --release
-```
-
-Binary location: `violet/target/release/violet`
-
-### Usage
-```bash
-# Encrypt data (requires Keys server running)
-echo "secret" | ./target/release/violet encrypt > envelope.json
-
-# Decrypt data
-./target/release/violet decrypt -i envelope.json
-
-# Run as daemon
-./target/release/violet daemon --socket /tmp/violet.sock
-```
-
-### Testing Violet
-```bash
-cd violet
-cargo test                    # Unit tests
-cargo test -- --ignored       # Integration tests (requires Keys server)
-```
-
-See `violet/README.md` for complete documentation.
+2. Build module: `./gradlew :module-name:build`
+3. Run tests: `./gradlew :module-name:test`
+4. Check coverage: `./gradlew :module-name:jacocoTestReport`
+5. Before commits, test everything locally: `./gradlew test`

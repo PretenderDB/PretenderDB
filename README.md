@@ -4,27 +4,43 @@ A DynamoDB-compatible library for Java that stores data in SQL databases (Postgr
 
 ## NOTICE
 
-This module has primarily been written by Claude.AI as an experiment.
-It has not been used in production as of 2026-01-02, and not fully reviewed
-by a human yet. Use at your own risk.
+This module has primarily been written by Claude.AI as an experiment. The idea
+started during a discussion on Mastodon about having a durable/production-like
+DynamoDB alternative for local development other than localstack or dynamodb-local.
+But honestly this is kinda annoying to write. It's very fiddly to write, and
+will be time consuming. But there is a known implementation. Having Claude
+write this and be able to test it easily against the original implementation
+seemed like a perfect AI project.
 
-That said, this seemed like a great way to use Claude to write code as
-everything written can be compared against localstack, dynamodb-local, and
-AWS DynamoDB itself. I have integ tests to do just that, to validate it.
+Be aware that as of yet, this has not been used in production (as of 2026-01-02,)
+and not fully reviewed by a human yet. Use at your own risk.
 
-I am in the process of reviewing the code and validating it's correctness.
+I am in the process of reviewing the code and validating it's correctness. 
+Integration tests have been written to compare against DynamoDB Local, to 
+validate it.
+
+## TL;DR
+
+Pretender is a Java library that implements a DynamoDB-compatible API that lets
+you develop and deploy your application with PostgreSQL, but migrate easily to
+DynamoDB should you actually need the scale AWS provides.
 
 ## Overview
 
 The ability to run DynamoDB locally for development that is provided
-by Amazon's [local dynamodb project](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.DownloadingAndRunning.html) is great feature.
+by Amazon's [local dynamodb project](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.DownloadingAndRunning.html) (or localstack) is great feature.
 It uses a SQLite instance to store the data, mimicking how DDB works on AWS.
-However, there are a few shortcomings that it does not address.
+Having PretenderDB implement DynamoDB but use an open-source SQL database
+like PostgreSQL or HSQLDB as a backend has several advantages:
 
-1. It is useful during development to have easy access to the datastore. They do not give that.
-2. If you are a startup, it may be a while before you can fully realize the benefit of running in the cloud.
+1. While existing tools are useful during development, PretenderDB provides a production version without deploying to AWS and paying AWS costs.
+2. Having a (durable) production-quality version of DynamoDB that does not require AWS means you can use it until you need the real scale AWS provides.
+3. Normal DBM tooling can be use for backups, migrations, and analysis, though your analysis will be limited here by the PretenderDB architecture.
 
-Pretender addresses these shortcomings by providing a full DynamoDB-compatible client backed by standard SQL databases.
+By using PretenderDB for your project, you can develop and launch your application while building
+up a user-base. It saves you money on AWS costs, and allows you to switch to AWS DynamoDB should 
+you really need the scale.
+
 
 ## Features
 
