@@ -25,6 +25,46 @@ Pretender is a Java library that implements a DynamoDB-compatible API that lets
 you develop and deploy your application with PostgreSQL, but migrate easily to
 DynamoDB should you actually need the scale AWS provides.
 
+## Installation
+
+### Maven
+
+```xml
+<dependency>
+  <groupId>io.github.pretenderdb</groupId>
+  <artifactId>pretender</artifactId>
+  <version>1.0.0</version>
+</dependency>
+```
+
+### Gradle (Kotlin DSL)
+
+```kotlin
+dependencies {
+    implementation("io.github.pretenderdb:pretender:1.0.0")
+}
+```
+
+### Gradle (Groovy)
+
+```groovy
+dependencies {
+    implementation 'io.github.pretenderdb:pretender:1.0.0'
+}
+```
+
+### Available Modules
+
+PretenderDB publishes two modules to Maven Central:
+
+- **`pretender`** - Core DynamoDB-compatible client (this is what you typically need)
+- **`database-utils`** - JDBI factory and Liquibase integration utilities
+
+Additional modules in this repository:
+- **`pretender-integ`** - Integration test utilities (not published to Maven Central)
+
+Check the [releases page](https://github.com/PretenderDB/PretenderDB/releases) for the latest version.
+
 ## Overview
 
 The ability to run DynamoDB locally for development that is provided

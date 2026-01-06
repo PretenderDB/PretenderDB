@@ -193,3 +193,58 @@ The `pretender` module provides a DynamoDB-compatible client backed by SQL:
 3. Run tests: `./gradlew :module-name:test`
 4. Check coverage: `./gradlew :module-name:jacocoTestReport`
 5. Before commits, test everything locally: `./gradlew test`
+
+## Releasing
+
+### Creating a Release
+
+PretenderDB uses semantic versioning with Git tags to trigger automated releases to Maven Central.
+
+1. Ensure all tests pass: `./gradlew clean build test`
+2. Create a semantic version tag: `git tag -a v1.0.0 -m "Release 1.0.0"`
+3. Push the tag: `git push origin v1.0.0`
+4. GitHub Actions will automatically:
+   - Build and test all modules
+   - Sign artifacts with GPG
+   - Publish to Maven Central via OSSRH
+   - Create a GitHub release with artifacts
+
+See [RELEASING.md](RELEASING.md) for complete details on:
+- Prerequisites (OSSRH account, GPG key setup, GitHub secrets)
+- Version strategy (semantic versioning)
+- Troubleshooting release issues
+- Manual recovery procedures
+- Testing releases locally
+
+### Version Strategy
+
+- Version is determined by Git tags (format: `vX.Y.Z`)
+- Non-tagged commits use SNAPSHOT versions (e.g., `0.0.1-SNAPSHOT`)
+- Both published modules (`database-utils` and `pretender`) share the same version number
+- `pretender-integ` is not published to Maven Central (integration testing only)
+- Pre-release tags (e.g., `v1.0.0-rc.1`) create pre-releases on GitHub
+- Semantic versioning:
+  - Major (X.0.0): Breaking API changes
+  - Minor (1.X.0): New features, backward compatible
+  - Patch (1.0.X): Bug fixes, backward compatible
+
+### Publishing Coordinates
+
+When released, artifacts are published to Maven Central:
+- Group ID: `io.github.pretenderdb`
+- Artifact IDs: `database-utils`, `pretender`
+- Version: Extracted from Git tag
+- Note: `pretender-integ` is not published (testing module only)
+
+Users can depend on the library via Maven or Gradle:
+```xml
+<dependency>
+  <groupId>io.github.pretenderdb</groupId>
+  <artifactId>pretender</artifactId>
+  <version>1.0.0</version>
+</dependency>
+```
+
+```kotlin
+implementation("io.github.pretenderdb:pretender:1.0.0")
+```

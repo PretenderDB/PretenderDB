@@ -6,6 +6,8 @@ plugins {
     id("buildlogic.java-library-conventions")
 }
 
+description = "DynamoDB-compatible client using SQL databases (PostgreSQL/HSQLDB) as backend"
+
 dependencies {
     implementation(project(":database-utils"))
     implementation(libs.jackson.databind)

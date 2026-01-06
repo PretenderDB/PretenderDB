@@ -1,6 +1,12 @@
 plugins {
-    id("buildlogic.java-library-conventions")
+    id("buildlogic.java-common-conventions")
+    id("buildlogic.jacoco-conventions")
+    `java-library`
 }
+
+description = "Integration tests for PretenderDB DynamoDB compatibility"
+
+// This module is for integration testing only and should not be published to Maven Central
 
 dependencies {
     // Pretender module to test
