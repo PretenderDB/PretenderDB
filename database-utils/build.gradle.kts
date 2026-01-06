@@ -6,6 +6,8 @@ plugins {
     id("buildlogic.java-library-conventions")
 }
 
+description = "Database utilities for JDBI and Liquibase integration"
+
 dependencies {
     implementation(libs.jackson.databind)
     implementation(libs.immutables.annotations)
