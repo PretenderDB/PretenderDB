@@ -444,15 +444,27 @@ Follow semantic versioning:
 
 ### Can I publish SNAPSHOT versions?
 
-SNAPSHOT versions can be published using the nmcp plugin. They are available at:
-- https://central.sonatype.com/repository/maven-snapshots/io/github/pretenderdb/
+**Automatic:** SNAPSHOT versions are automatically published when pushing to the `main` branch. The `snapshot.yml` workflow handles this.
 
-To publish a snapshot:
+**Manual:** You can also publish snapshots manually:
 ```bash
 ./gradlew publishAggregationToCentralSnapshots
 ```
 
-Users can depend on SNAPSHOT versions by adding the snapshots repository to their build configuration.
+Snapshots are available at:
+- https://central.sonatype.com/repository/maven-snapshots/io/github/pretenderdb/
+
+Users can depend on SNAPSHOT versions by adding the snapshots repository:
+```kotlin
+repositories {
+    maven("https://central.sonatype.com/repository/maven-snapshots/")
+    mavenCentral()
+}
+
+dependencies {
+    implementation("io.github.pretenderdb:pretender:0.0.1-SNAPSHOT")
+}
+```
 
 ### How long does it take for artifacts to appear in Maven Central?
 
