@@ -84,14 +84,14 @@ Add the following secrets:
 
 | Secret Name | Value | Description |
 |-------------|-------|-------------|
-| `OSSRH_USERNAME` | User token username | Username from "Generate User Token" (NOT your login username) |
-| `OSSRH_PASSWORD` | User token password | Password from "Generate User Token" (NOT your login password) |
+| `CENTRAL_PORTAL_USERNAME` | User token username | Username from "Generate User Token" (NOT your login username) |
+| `CENTRAL_PORTAL_PASSWORD` | User token password | Password from "Generate User Token" (NOT your login password) |
 | `GPG_PRIVATE_KEY` | Content of private-key.txt | Base64-encoded GPG private key |
 | `GPG_PASSPHRASE` | Your GPG key passphrase | Passphrase for the GPG key |
 | `GPG_KEY_ID` | Last 8 chars of key ID | Short key ID (e.g., EFGH5678) |
 
 **Security Notes:**
-- `OSSRH_USERNAME` and `OSSRH_PASSWORD` are the **user token credentials**, not your portal login credentials
+- `CENTRAL_PORTAL_USERNAME` and `CENTRAL_PORTAL_PASSWORD` are the **user token credentials** from https://central.sonatype.com, not your portal login credentials
 - Store the GPG key passphrase securely
 - Delete `private-key.txt` after uploading to GitHub secrets
 - Never commit credentials to the repository
@@ -146,8 +146,8 @@ git push origin v1.0.0
    - Extract the version from the tag
    - Build and test all modules
    - Sign artifacts with GPG
-   - Publish to Maven Central via OSSRH
-   - Close and release the OSSRH staging repository
+   - Publish to Maven Central via Central Portal
+   - Automatically release the deployment
    - Create a GitHub release with JAR artifacts
 
 ### Step 3: Monitor Release
@@ -246,11 +246,11 @@ Note: The `pretender-integ` module is for integration testing only and is not pu
 
 **Symptoms:**
 - HTTP 401 Unauthorized
-- "Could not authenticate with OSSRH"
+- "Could not authenticate" errors
 - Authentication failures during publishing
 
 **Solutions:**
-1. Verify `OSSRH_USERNAME` and `OSSRH_PASSWORD` secrets contain the **user token credentials** (not your login credentials)
+1. Verify `CENTRAL_PORTAL_USERNAME` and `CENTRAL_PORTAL_PASSWORD` secrets contain the **user token credentials** (not your login credentials)
 2. Regenerate user token at https://central.sonatype.com (Account page → Generate User Token)
 3. Check your namespace `io.github.pretenderdb` is verified in Central Portal
 4. Verify account has publishing rights for `io.github.pretenderdb` namespace
@@ -289,10 +289,10 @@ Note: The `pretender-integ` module is for integration testing only and is not pu
    git push origin v1.0.0
    ```
 
-### Release Failed: Staging Repository Validation
+### Release Failed: Central Portal Validation
 
 **Symptoms:**
-- OSSRH staging repository fails validation
+- Deployment fails validation on Central Portal
 - Missing POM information or signatures
 
 **Solutions:**
@@ -306,18 +306,18 @@ Note: The `pretender-integ` module is for integration testing only and is not pu
    ./gradlew signMavenJavaPublication
    find . -name "*.asc"
    ```
+3. Check deployment status at https://central.sonatype.com under "Deployments"
 
 ### Manual Release Recovery
 
 If the automated release fails after artifacts are uploaded:
 
-**Using Central Portal (Recommended - 2024+):**
 1. Log into https://central.sonatype.com
 2. Navigate to "Deployments" in the left sidebar
 3. Find your deployment (check status: Published, Failed, Pending, or Validated)
 4. Review any validation errors
 5. If validation passed but not published:
-   - The Gradle Nexus plugin should have auto-published
+   - The nmcp plugin should have auto-published
    - Contact Central Support if stuck
 6. If validation failed:
    - Note the errors
@@ -325,13 +325,7 @@ If the automated release fails after artifacts are uploaded:
    - Delete the Git tag: `git push --delete origin v1.0.0`
    - Re-run the release after fixes
 
-**Legacy Staging Repository (if using old OSSRH):**
-1. Log into https://oss.sonatype.org/ (legacy system)
-2. Navigate to "Staging Repositories"
-3. Find your repository (named `iogithubpretenderdb-XXXX`)
-4. Follow close/release or drop procedures
-
-**Note:** The new Central Portal automates most of this process via the Gradle Nexus Publish plugin.
+**Note:** The nmcp Gradle plugin handles the Central Portal publishing API automatically.
 
 ### Rollback a Release
 
@@ -450,8 +444,13 @@ Follow semantic versioning:
 
 ### Can I publish SNAPSHOT versions?
 
-SNAPSHOT versions are published automatically for non-tagged commits. They are available at:
-- https://oss.sonatype.org/content/repositories/snapshots/io/github/pretenderdb/
+SNAPSHOT versions can be published using the nmcp plugin. They are available at:
+- https://central.sonatype.com/repository/maven-snapshots/io/github/pretenderdb/
+
+To publish a snapshot:
+```bash
+./gradlew publishAggregationToCentralSnapshots
+```
 
 Users can depend on SNAPSHOT versions by adding the snapshots repository to their build configuration.
 

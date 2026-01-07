@@ -8,10 +8,20 @@
 plugins {
     // Apply the foojay-resolver plugin to allow automatic download of JDKs
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
+    // Nmcp plugin for publishing to Maven Central via Central Portal
+    id("com.gradleup.nmcp.settings") version "1.4.3"
 }
 
 rootProject.name = "pretenderdb"
 include("pretender", "database-utils", "pretender-integ")
+
+// Configure Central Portal publishing credentials
+nmcpSettings {
+    centralPortal {
+        username = System.getenv("CENTRAL_PORTAL_USERNAME") ?: providers.gradleProperty("centralPortalUsername").orNull
+        password = System.getenv("CENTRAL_PORTAL_PASSWORD") ?: providers.gradleProperty("centralPortalPassword").orNull
+    }
+}
 
 // Extract version from Git tag or use gradle.properties default
 gradle.beforeProject {

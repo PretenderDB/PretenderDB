@@ -1,9 +1,11 @@
 plugins {
-    // Apply the java Plugin to add support for Java.
     `maven-publish`
     signing
 }
 
+// Publication configuration for Maven Central via nmcp plugin
+// The nmcp settings plugin (configured in settings.gradle.kts) handles the actual
+// upload to Central Portal. This convention plugin defines the publication metadata.
 publishing {
     publications {
         create<MavenPublication>("mavenJava") {
@@ -45,15 +47,7 @@ publishing {
             }
         }
     }
-    repositories {
-        maven {
-            val releasesRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2"
-            val snapshotsRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots"
-            url = uri(if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl)
-            name = "ossrh"
-            credentials(PasswordCredentials::class)
-        }
-    }
+    // Note: No repositories block needed - nmcp plugin handles upload to Central Portal
 }
 
 signing {
@@ -74,6 +68,5 @@ tasks.register("verifyPublishConfig") {
         println("Artifact: ${project.name}")
         println("Version: ${project.version}")
         println("Is SNAPSHOT: ${version.toString().endsWith("SNAPSHOT")}")
-        println("Repository: ${if (version.toString().endsWith("SNAPSHOT")) "snapshots" else "releases"}")
     }
 }

@@ -65,33 +65,31 @@ jobs:
 
       - name: Configure GPG for signing
         run: |
-          # Configure git to use gpg
+          # Configure gpg for non-interactive signing
           echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
           echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
           gpg-connect-agent reloadagent /bye
 
       - name: Publish to Maven Central
         env:
-          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+          CENTRAL_PORTAL_USERNAME: ${{ secrets.CENTRAL_PORTAL_USERNAME }}
+          CENTRAL_PORTAL_PASSWORD: ${{ secrets.CENTRAL_PORTAL_PASSWORD }}
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
           GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
         run: |
           # Export GPG_TTY for passphrase
           export GPG_TTY=$(tty)
 
-          # Create gradle.properties with credentials
+          # Create gradle.properties with GPG credentials
           cat > ~/.gradle/gradle.properties << EOF
-          ossrhUsername=$OSSRH_USERNAME
-          ossrhPassword=$OSSRH_PASSWORD
           signing.gnupg.keyName=$GPG_KEY_ID
           signing.gnupg.passphrase=$GPG_PASSPHRASE
           EOF
 
           chmod 600 ~/.gradle/gradle.properties
 
-          # Publish to OSSRH
-          ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository \
+          # Publish to Maven Central via Central Portal
+          ./gradlew publishAggregationToCentralPortal \
             --no-daemon \
             --stacktrace
 
