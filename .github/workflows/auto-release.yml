@@ -3,11 +3,7 @@ name: Auto Release on Main
 on:
   push:
     branches: [ "main" ]
-    # Don't release when only docs/workflow changes
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - '.github/dependabot.yml'
+  workflow_dispatch:  # Allow manual trigger for testing
 
 jobs:
   auto-release:
@@ -28,8 +24,23 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
+      - name: Check if current commit already has a release tag
+        id: check
+        run: |
+          # Check if HEAD already has a version tag
+          EXISTING_TAG=$(git tag --points-at HEAD | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+$" || true)
+          if [ -n "$EXISTING_TAG" ]; then
+            echo "Current commit already has release tag: $EXISTING_TAG"
+            echo "Skipping auto-release to prevent duplicate."
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "No release tag on current commit, proceeding with auto-release."
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Get latest tag and increment patch version
         id: version
+        if: steps.check.outputs.skip == 'false'
         run: |
           # Get the latest semantic version tag
           LATEST_TAG=$(git tag -l "v[0-9]*.[0-9]*.[0-9]*" | sort -V | tail -n 1)
@@ -59,6 +70,7 @@ jobs:
           echo "tag=$NEW_TAG" >> $GITHUB_OUTPUT
 
       - name: Create and push tag
+        if: steps.check.outputs.skip == 'false'
         env:
           NEW_TAG: ${{ steps.version.outputs.tag }}
           NEW_VERSION: ${{ steps.version.outputs.version }}
@@ -72,6 +84,7 @@ jobs:
           echo "Created and pushed tag: $NEW_TAG"
 
       - name: Summary
+        if: steps.check.outputs.skip == 'false'
         env:
           NEW_TAG: ${{ steps.version.outputs.tag }}
           NEW_VERSION: ${{ steps.version.outputs.version }}
@@ -86,3 +99,10 @@ jobs:
           echo "3. Create GitHub release with artifacts" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "View the release workflow: [Release to Maven Central](../../actions/workflows/release.yml)" >> $GITHUB_STEP_SUMMARY
+
+      - name: Skipped Summary
+        if: steps.check.outputs.skip == 'true'
+        run: |
+          echo "## Auto-Release Skipped" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Current commit already has a release tag. No action taken." >> $GITHUB_STEP_SUMMARY
