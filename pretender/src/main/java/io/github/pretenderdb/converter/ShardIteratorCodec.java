@@ -1,8 +1,8 @@
 package io.github.pretenderdb.converter;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.pretenderdb.model.ImmutableShardIterator;
 import io.github.pretenderdb.model.ShardIterator;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import javax.inject.Inject;

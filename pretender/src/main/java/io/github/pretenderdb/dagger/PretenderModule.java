@@ -1,8 +1,11 @@
 package io.github.pretenderdb.dagger;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import dagger.Module;
+import dagger.Provides;
+import io.github.pretenderdb.dao.PdbMetadataDao;
 import io.github.pretenderdb.dbu.factory.JdbiFactory;
 import io.github.pretenderdb.dbu.liquibase.LiquibaseHelper;
-import io.github.pretenderdb.dao.PdbMetadataDao;
 import io.github.pretenderdb.encryption.EncryptionService;
 import io.github.pretenderdb.encryption.NoOpEncryptionService;
 import io.github.pretenderdb.model.EncryptionConfig;
@@ -10,9 +13,6 @@ import io.github.pretenderdb.model.PdbGlobalSecondaryIndex;
 import io.github.pretenderdb.model.PdbItem;
 import io.github.pretenderdb.model.PdbMetadata;
 import io.github.pretenderdb.model.PdbStreamRecord;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import dagger.Module;
-import dagger.Provides;
 import java.util.Set;
 import javax.inject.Named;
 import javax.inject.Singleton;

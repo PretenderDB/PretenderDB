@@ -452,7 +452,7 @@ public class PdbItemDao {
       // WHERE (hash_key > last_hash) OR (hash_key = last_hash AND sort_key > last_sort)
       if (exclusiveStartSortKey.isPresent()) {
         whereClause = "WHERE (hash_key_value > :exclusiveHashKey) OR " +
-                     "(hash_key_value = :exclusiveHashKey AND COALESCE(sort_key_value, '') > :exclusiveSortKey)";
+            "(hash_key_value = :exclusiveHashKey AND COALESCE(sort_key_value, '') > :exclusiveSortKey)";
       } else {
         whereClause = "WHERE hash_key_value > :exclusiveHashKey";
       }

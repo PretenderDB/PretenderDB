@@ -1,12 +1,12 @@
 package io.github.pretenderdb.dagger;
 
+import dagger.Component;
 import io.github.pretenderdb.DynamoDbPretenderClient;
 import io.github.pretenderdb.DynamoDbStreamsPretenderClient;
 import io.github.pretenderdb.manager.PdbTableManager;
 import io.github.pretenderdb.model.Configuration;
 import io.github.pretenderdb.service.StreamCleanupService;
 import io.github.pretenderdb.service.TtlCleanupService;
-import dagger.Component;
 import javax.inject.Singleton;
 
 /**

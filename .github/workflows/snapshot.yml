@@ -1,19 +1,13 @@
 name: Publish Snapshot
 
 on:
-  push:
-    branches: [ "main" ]
-    # Don't publish snapshots when only docs change
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - '.github/dependabot.yml'
+  # Disabled: auto-release.yml now handles releases on main
+  # This workflow can be manually triggered if needed for development snapshots
+  workflow_dispatch:
 
 jobs:
   snapshot:
     runs-on: ubuntu-latest
-    # Don't run on tag pushes (those go through release.yml)
-    if: ${{ !startsWith(github.ref, 'refs/tags/') }}
 
     permissions:
       contents: read

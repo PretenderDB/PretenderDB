@@ -268,9 +268,9 @@ public class KeyConditionExpressionParser {
      * @return the hash key value
      */
     @Override
-      public String hashKeyValue() {
-        return hashKeyValue;
-      }
+    public String hashKeyValue() {
+      return hashKeyValue;
+    }
 
     /**
      * Gets sort key condition (SQL WHERE clause fragment).
@@ -278,9 +278,9 @@ public class KeyConditionExpressionParser {
      * @return the sort key condition
      */
     @Override
-      public String sortKeyCondition() {
-        return sortKeyCondition;
-      }
+    public String sortKeyCondition() {
+      return sortKeyCondition;
+    }
 
     /**
      * Gets sort key value to bind to the SQL parameter.
@@ -288,8 +288,8 @@ public class KeyConditionExpressionParser {
      * @return the sort key value
      */
     @Override
-      public Optional<String> sortKeyValue() {
-        return sortKeyValue;
-      }
+    public Optional<String> sortKeyValue() {
+      return sortKeyValue;
     }
+  }
 }

@@ -1,9 +1,9 @@
 package io.github.pretenderdb.model;
 
-import io.github.pretenderdb.dbu.model.Database;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import io.github.pretenderdb.dbu.model.Database;
 import org.immutables.value.Value;
 
 /**
