@@ -23,7 +23,6 @@ public class DynamoDbPretenderClient implements DynamoDbClient {
   private static final Logger log = LoggerFactory.getLogger(DynamoDbPretenderClient.class);
 
   private static final String SERVICE_NAME = "dynamodb";
-  private static final String TEST_STRING = "Ignore this please";
   private final PdbTableManager pdbTableManager;
   private final PdbTableConverter pdbTableConverter;
   private final PdbItemManager pdbItemManager;
