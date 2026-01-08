@@ -1,9 +1,9 @@
 package io.github.pretenderdb.dagger;
 
-import io.github.pretenderdb.dbu.model.Database;
-import io.github.pretenderdb.model.Configuration;
 import dagger.Module;
 import dagger.Provides;
+import io.github.pretenderdb.dbu.model.Database;
+import io.github.pretenderdb.model.Configuration;
 import javax.inject.Named;
 import javax.inject.Singleton;
 

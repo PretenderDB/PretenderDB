@@ -1,9 +1,9 @@
 package io.github.pretenderdb.dao;
 
-import io.github.pretenderdb.model.PdbGlobalSecondaryIndex;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.github.pretenderdb.model.PdbGlobalSecondaryIndex;
 import java.sql.Types;
 import java.util.List;
 import org.jdbi.v3.core.argument.AbstractArgumentFactory;

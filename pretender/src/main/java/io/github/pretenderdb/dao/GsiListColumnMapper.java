@@ -1,9 +1,9 @@
 package io.github.pretenderdb.dao;
 
-import io.github.pretenderdb.model.ImmutablePdbGlobalSecondaryIndex;
-import io.github.pretenderdb.model.PdbGlobalSecondaryIndex;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.pretenderdb.model.ImmutablePdbGlobalSecondaryIndex;
+import io.github.pretenderdb.model.PdbGlobalSecondaryIndex;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;

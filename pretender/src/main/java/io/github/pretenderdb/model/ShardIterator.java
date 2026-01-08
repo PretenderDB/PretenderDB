@@ -1,8 +1,8 @@
 package io.github.pretenderdb.model;
 
-import io.github.pretenderdb.manager.PdbStreamManager;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import io.github.pretenderdb.manager.PdbStreamManager;
 import org.immutables.value.Value;
 import software.amazon.awssdk.services.dynamodb.model.ShardIteratorType;
 

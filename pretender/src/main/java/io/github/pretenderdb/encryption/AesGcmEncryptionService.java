@@ -265,5 +265,6 @@ public class AesGcmEncryptionService implements EncryptionService {
   /**
    * Simple record for type-tagged values during serialization.
    */
-  private record TypedValue(String type, Object value) {}
+  private record TypedValue(String type, Object value) {
+  }
 }

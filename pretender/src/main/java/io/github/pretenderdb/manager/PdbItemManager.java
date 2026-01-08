@@ -6,9 +6,12 @@ import io.github.pretenderdb.dao.PdbItemDao;
 import io.github.pretenderdb.expression.ConditionExpressionParser;
 import io.github.pretenderdb.expression.KeyConditionExpressionParser;
 import io.github.pretenderdb.expression.UpdateExpressionParser;
+import io.github.pretenderdb.helper.AttributeEncryptionHelper;
+import io.github.pretenderdb.helper.StreamCaptureHelper;
 import io.github.pretenderdb.model.PdbGlobalSecondaryIndex;
 import io.github.pretenderdb.model.PdbItem;
 import io.github.pretenderdb.model.PdbMetadata;
+import io.github.pretenderdb.util.CapacityCalculator;
 import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -41,9 +44,9 @@ public class PdbItemManager {
   private final KeyConditionExpressionParser keyConditionExpressionParser;
   private final UpdateExpressionParser updateExpressionParser;
   private final GsiProjectionHelper gsiProjectionHelper;
-  private final io.github.pretenderdb.helper.StreamCaptureHelper streamCaptureHelper;
-  private final io.github.pretenderdb.helper.AttributeEncryptionHelper encryptionHelper;
-  private final io.github.pretenderdb.util.CapacityCalculator capacityCalculator;
+  private final StreamCaptureHelper streamCaptureHelper;
+  private final AttributeEncryptionHelper encryptionHelper;
+  private final CapacityCalculator capacityCalculator;
   private final Clock clock;
   private final org.jdbi.v3.core.Jdbi jdbi;
 
@@ -75,9 +78,9 @@ public class PdbItemManager {
                         final KeyConditionExpressionParser keyConditionExpressionParser,
                         final UpdateExpressionParser updateExpressionParser,
                         final GsiProjectionHelper gsiProjectionHelper,
-                        final io.github.pretenderdb.helper.StreamCaptureHelper streamCaptureHelper,
-                        final io.github.pretenderdb.helper.AttributeEncryptionHelper encryptionHelper,
-                        final io.github.pretenderdb.util.CapacityCalculator capacityCalculator,
+                        final StreamCaptureHelper streamCaptureHelper,
+                        final AttributeEncryptionHelper encryptionHelper,
+                        final CapacityCalculator capacityCalculator,
                         final Clock clock,
                         final org.jdbi.v3.core.Jdbi jdbi) {
     log.info("PdbItemManager({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})",
@@ -515,7 +518,7 @@ public class PdbItemManager {
           .map(av -> attributeValueConverter.extractKeyValue(request.exclusiveStartKey(), hashKeyName));
       exclusiveStartSortKey = sortKeyName.isPresent()
           ? Optional.ofNullable(request.exclusiveStartKey().get(sortKeyName.get()))
-              .map(av -> attributeValueConverter.extractKeyValue(request.exclusiveStartKey(), sortKeyName.get()))
+          .map(av -> attributeValueConverter.extractKeyValue(request.exclusiveStartKey(), sortKeyName.get()))
           : Optional.empty();
     } else {
       exclusiveStartHashKey = Optional.empty();
@@ -637,7 +640,7 @@ public class PdbItemManager {
           .map(av -> attributeValueConverter.extractKeyValue(request.exclusiveStartKey(), metadata.hashKey()));
       exclusiveStartSortKey = metadata.sortKey().isPresent()
           ? Optional.ofNullable(request.exclusiveStartKey().get(metadata.sortKey().get()))
-              .map(av -> attributeValueConverter.extractKeyValue(request.exclusiveStartKey(), metadata.sortKey().get()))
+          .map(av -> attributeValueConverter.extractKeyValue(request.exclusiveStartKey(), metadata.sortKey().get()))
           : Optional.empty();
     }
 
@@ -1573,10 +1576,10 @@ public class PdbItemManager {
    * Process a ConditionCheck operation within a transaction.
    */
   private void processConditionCheckInTransaction(final Handle handle, final String tableName,
-                                                   final Map<String, AttributeValue> key,
-                                                   final String conditionExpression,
-                                                   final Map<String, String> expressionAttributeNames,
-                                                   final Map<String, AttributeValue> expressionAttributeValues) {
+                                                  final Map<String, AttributeValue> key,
+                                                  final String conditionExpression,
+                                                  final Map<String, String> expressionAttributeNames,
+                                                  final Map<String, AttributeValue> expressionAttributeValues) {
     final PdbMetadata metadata = getTableMetadata(tableName);
 
     // Extract key values
@@ -1611,7 +1614,7 @@ public class PdbItemManager {
   /**
    * Validates item attributes according to DynamoDB rules.
    *
-   * @param item the item to validate
+   * @param item     the item to validate
    * @param metadata the table metadata (for key attribute names)
    * @throws IllegalArgumentException if validation fails
    */
@@ -1621,7 +1624,7 @@ public class PdbItemManager {
     if (hashKeyAttr != null && hashKeyAttr.s() != null && hashKeyAttr.s().isEmpty()) {
       throw new IllegalArgumentException(
           "One or more parameter values were invalid: An AttributeValue may not contain an empty string. " +
-          "Key: " + metadata.hashKey());
+              "Key: " + metadata.hashKey());
     }
 
     // Validate sort key is not empty string (if table has sort key)
@@ -1630,7 +1633,7 @@ public class PdbItemManager {
       if (sortKeyAttr != null && sortKeyAttr.s() != null && sortKeyAttr.s().isEmpty()) {
         throw new IllegalArgumentException(
             "One or more parameter values were invalid: An AttributeValue may not contain an empty string. " +
-            "Key: " + metadata.sortKey().get());
+                "Key: " + metadata.sortKey().get());
       }
     }
 
@@ -1642,7 +1645,7 @@ public class PdbItemManager {
       if (attrValue.b() != null && attrValue.b().asByteArray().length == 0) {
         throw new IllegalArgumentException(
             "One or more parameter values were invalid: Binary attributes cannot be empty. " +
-            "Attribute: " + entry.getKey());
+                "Attribute: " + entry.getKey());
       }
 
       // Check binary set attribute
@@ -1651,7 +1654,7 @@ public class PdbItemManager {
           if (bytes.asByteArray().length == 0) {
             throw new IllegalArgumentException(
                 "One or more parameter values were invalid: Binary set attributes cannot contain empty values. " +
-                "Attribute: " + entry.getKey());
+                    "Attribute: " + entry.getKey());
           }
         }
       }
@@ -1662,7 +1665,7 @@ public class PdbItemManager {
           if (str.isEmpty()) {
             throw new IllegalArgumentException(
                 "One or more parameter values were invalid: String set attributes cannot contain empty strings. " +
-                "Attribute: " + entry.getKey());
+                    "Attribute: " + entry.getKey());
           }
         }
       }
@@ -1686,7 +1689,7 @@ public class PdbItemManager {
     if (itemSizeBytes > MAX_ITEM_SIZE_BYTES) {
       throw new IllegalArgumentException(
           "Item size has exceeded the maximum allowed size of 400 KB " +
-          "(actual size: " + itemSizeBytes + " bytes)");
+              "(actual size: " + itemSizeBytes + " bytes)");
     }
   }
 }
