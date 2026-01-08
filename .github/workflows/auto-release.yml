@@ -3,21 +3,15 @@ name: Auto Release on Main
 on:
   push:
     branches: [ "main" ]
-    # Don't run on tag pushes (those trigger release.yml)
-    tags-ignore:
-      - '**'
-    # Don't release when only docs change
+    # Don't release when only docs/workflow changes
     paths-ignore:
       - '**.md'
       - 'docs/**'
       - '.github/dependabot.yml'
-      - '.github/workflows/*.yml'
 
 jobs:
   auto-release:
     runs-on: ubuntu-latest
-    # Only run if this is not a tag push
-    if: ${{ !startsWith(github.ref, 'refs/tags/') }}
 
     permissions:
       contents: write
