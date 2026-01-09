@@ -3,10 +3,6 @@ name: Auto Release on Main
 on:
   push:
     branches: [ "main" ]
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - '.github/**'
   workflow_dispatch:  # Allow manual trigger for testing
 
 jobs:
@@ -21,15 +17,46 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Need full history to find tags
+          fetch-depth: 0  # Need full history to find tags and check changed files
+
+      - name: Check if only docs/workflows changed
+        id: changes
+        run: |
+          # Get list of changed files in the push
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "Manual trigger, proceeding with release"
+            echo "skip=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # For push events, check what files changed
+          # Compare with previous commit
+          CHANGED_FILES=$(git diff --name-only HEAD^ HEAD)
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+
+          # Filter out docs and workflow changes
+          CODE_CHANGES=$(echo "$CHANGED_FILES" | grep -v -E '\.md$|^docs/|^\.github/' || true)
+
+          if [ -z "$CODE_CHANGES" ]; then
+            echo "Only documentation or workflow files changed, skipping release"
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "Code changes detected, proceeding with release"
+            echo "Code changes:"
+            echo "$CODE_CHANGES"
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Configure Git
+        if: steps.changes.outputs.skip == 'false'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Check if current commit already has a release tag
         id: check
+        if: steps.changes.outputs.skip == 'false'
         run: |
           # Check if HEAD already has a version tag
           EXISTING_TAG=$(git tag --points-at HEAD | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+$" || true)
@@ -44,7 +71,7 @@ jobs:
 
       - name: Get latest tag and increment patch version
         id: version
-        if: steps.check.outputs.skip == 'false'
+        if: steps.changes.outputs.skip == 'false' && steps.check.outputs.skip == 'false'
         run: |
           # Get the latest semantic version tag
           LATEST_TAG=$(git tag -l "v[0-9]*.[0-9]*.[0-9]*" | sort -V | tail -n 1)
@@ -76,7 +103,7 @@ jobs:
           echo "TAG=$NEW_TAG" >> $GITHUB_ENV
 
       - name: Set up JDK 21
-        if: steps.check.outputs.skip == 'false'
+        if: steps.changes.outputs.skip == 'false' && steps.check.outputs.skip == 'false'
         uses: actions/setup-java@v4
         with:
           java-version: '21'
@@ -84,15 +111,15 @@ jobs:
           cache: 'gradle'
 
       - name: Setup Gradle
-        if: steps.check.outputs.skip == 'false'
+        if: steps.changes.outputs.skip == 'false' && steps.check.outputs.skip == 'false'
         uses: gradle/actions/setup-gradle@v3
 
       - name: Build and test
-        if: steps.check.outputs.skip == 'false'
+        if: steps.changes.outputs.skip == 'false' && steps.check.outputs.skip == 'false'
         run: ./gradlew clean build test
 
       - name: Import GPG key
-        if: steps.check.outputs.skip == 'false'
+        if: steps.changes.outputs.skip == 'false' && steps.check.outputs.skip == 'false'
         env:
           GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
@@ -103,7 +130,7 @@ jobs:
           echo "GPG key imported and tested successfully"
 
       - name: Configure GPG for signing
-        if: steps.check.outputs.skip == 'false'
+        if: steps.changes.outputs.skip == 'false' && steps.check.outputs.skip == 'false'
         run: |
           # Configure gpg for non-interactive signing
           echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
@@ -111,7 +138,7 @@ jobs:
           gpg-connect-agent reloadagent /bye
 
       - name: Publish to Maven Central
-        if: steps.check.outputs.skip == 'false'
+        if: steps.changes.outputs.skip == 'false' && steps.check.outputs.skip == 'false'
         env:
           CENTRAL_PORTAL_USERNAME: ${{ secrets.CENTRAL_PORTAL_USERNAME }}
           CENTRAL_PORTAL_PASSWORD: ${{ secrets.CENTRAL_PORTAL_PASSWORD }}
@@ -135,13 +162,13 @@ jobs:
             --stacktrace
 
       - name: Build distribution archives
-        if: steps.check.outputs.skip == 'false'
+        if: steps.changes.outputs.skip == 'false' && steps.check.outputs.skip == 'false'
         run: |
           ./gradlew :database-utils:jar :database-utils:javadocJar :database-utils:sourcesJar
           ./gradlew :pretender:jar :pretender:javadocJar :pretender:sourcesJar
 
       - name: Create and push tag
-        if: steps.check.outputs.skip == 'false'
+        if: steps.changes.outputs.skip == 'false' && steps.check.outputs.skip == 'false'
         run: |
           # Create annotated tag after successful build and publish
           git tag -a "$TAG" -m "Auto-release $VERSION"
@@ -149,7 +176,7 @@ jobs:
           echo "Created and pushed tag: $TAG"
 
       - name: Create GitHub Release
-        if: steps.check.outputs.skip == 'false'
+        if: steps.changes.outputs.skip == 'false' && steps.check.outputs.skip == 'false'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.TAG }}
@@ -189,7 +216,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Summary
-        if: steps.check.outputs.skip == 'false'
+        if: steps.changes.outputs.skip == 'false' && steps.check.outputs.skip == 'false'
         run: |
           echo "## Auto-Release Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -206,14 +233,21 @@ jobs:
           echo "implementation(\"io.github.pretenderdb:pretender:$VERSION\")" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
 
-      - name: Skipped Summary
-        if: steps.check.outputs.skip == 'true'
+      - name: Skipped Summary - Docs Only
+        if: steps.changes.outputs.skip == 'true'
+        run: |
+          echo "## Auto-Release Skipped" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Only documentation or workflow files changed. No release needed." >> $GITHUB_STEP_SUMMARY
+
+      - name: Skipped Summary - Duplicate Tag
+        if: steps.changes.outputs.skip == 'false' && steps.check.outputs.skip == 'true'
         run: |
           echo "## Auto-Release Skipped" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Current commit already has a release tag. No action taken." >> $GITHUB_STEP_SUMMARY
 
       - name: Notify on failure
-        if: failure() && steps.check.outputs.skip == 'false'
+        if: failure() && steps.changes.outputs.skip == 'false' && steps.check.outputs.skip == 'false'
         run: |
           echo "::error::Auto-release failed! Check logs for details."
