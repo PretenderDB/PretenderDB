@@ -1,10 +1,12 @@
-name: Release to Maven Central
+name: Manual Release to Maven Central
 
 on:
-  push:
-    tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+'
-      - 'v[0-9]+.[0-9]+.[0-9]+-*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.2.0, 2.0.0)'
+        required: true
+        type: string
 
 jobs:
   release:
@@ -19,15 +21,24 @@ jobs:
         with:
           fetch-depth: 0  # Need full history for git describe
 
-      - name: Validate tag format
+      - name: Validate version format
         run: |
-          TAG=${GITHUB_REF#refs/tags/}
+          VERSION="${{ github.event.inputs.version }}"
+          TAG="v$VERSION"
+          echo "Version: $VERSION"
           echo "Tag: $TAG"
-          if ! [[ $TAG =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$ ]]; then
-            echo "ERROR: Tag must match semantic versioning (vX.Y.Z or vX.Y.Z-suffix)"
+          if ! [[ $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$ ]]; then
+            echo "ERROR: Version must match semantic versioning (X.Y.Z or X.Y.Z-suffix)"
             exit 1
           fi
-          echo "VERSION=${TAG#v}" >> $GITHUB_ENV
+
+          # Check if tag already exists
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "ERROR: Tag $TAG already exists"
+            exit 1
+          fi
+
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "TAG=$TAG" >> $GITHUB_ENV
 
       - name: Set up JDK 21
@@ -39,6 +50,12 @@ jobs:
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
+
+      - name: Create tag locally for version detection
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "Manual release $VERSION"
 
       - name: Verify version matches tag
         run: |
@@ -98,9 +115,15 @@ jobs:
           ./gradlew :database-utils:jar :database-utils:javadocJar :database-utils:sourcesJar
           ./gradlew :pretender:jar :pretender:javadocJar :pretender:sourcesJar
 
+      - name: Push tag to remote
+        run: |
+          git push origin "$TAG"
+          echo "Pushed tag: $TAG"
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ env.TAG }}
           name: Release ${{ env.VERSION }}
           body: |
             ## PretenderDB ${{ env.VERSION }}
