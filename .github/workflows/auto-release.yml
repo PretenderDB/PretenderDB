@@ -3,6 +3,10 @@ name: Auto Release on Main
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.github/**'
   workflow_dispatch:  # Allow manual trigger for testing
 
 jobs:
@@ -11,13 +15,13 @@ jobs:
 
     permissions:
       contents: write
+      packages: write
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Need full history to find tags
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Configure Git
         run: |
@@ -68,37 +72,139 @@ jobs:
 
           echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "tag=$NEW_TAG" >> $GITHUB_OUTPUT
+          echo "VERSION=$NEW_VERSION" >> $GITHUB_ENV
+          echo "TAG=$NEW_TAG" >> $GITHUB_ENV
+
+      - name: Set up JDK 21
+        if: steps.check.outputs.skip == 'false'
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Setup Gradle
+        if: steps.check.outputs.skip == 'false'
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Build and test
+        if: steps.check.outputs.skip == 'false'
+        run: ./gradlew clean build test
+
+      - name: Import GPG key
+        if: steps.check.outputs.skip == 'false'
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          echo "$GPG_PRIVATE_KEY" | base64 -d | gpg --batch --import
+          # Test signing capability
+          echo "test" | gpg --clearsign --batch --yes --pinentry-mode loopback --passphrase "$GPG_PASSPHRASE" > /dev/null
+          echo "GPG key imported and tested successfully"
+
+      - name: Configure GPG for signing
+        if: steps.check.outputs.skip == 'false'
+        run: |
+          # Configure gpg for non-interactive signing
+          echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
+          echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
+          gpg-connect-agent reloadagent /bye
+
+      - name: Publish to Maven Central
+        if: steps.check.outputs.skip == 'false'
+        env:
+          CENTRAL_PORTAL_USERNAME: ${{ secrets.CENTRAL_PORTAL_USERNAME }}
+          CENTRAL_PORTAL_PASSWORD: ${{ secrets.CENTRAL_PORTAL_PASSWORD }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+          GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
+        run: |
+          # Export GPG_TTY for passphrase
+          export GPG_TTY=$(tty)
+
+          # Create gradle.properties with GPG credentials
+          cat > ~/.gradle/gradle.properties << EOF
+          signing.gnupg.keyName=$GPG_KEY_ID
+          signing.gnupg.passphrase=$GPG_PASSPHRASE
+          EOF
+
+          chmod 600 ~/.gradle/gradle.properties
+
+          # Publish to Maven Central via Central Portal
+          ./gradlew publishAggregationToCentralPortal \
+            --no-daemon \
+            --stacktrace
+
+      - name: Build distribution archives
+        if: steps.check.outputs.skip == 'false'
+        run: |
+          ./gradlew :database-utils:jar :database-utils:javadocJar :database-utils:sourcesJar
+          ./gradlew :pretender:jar :pretender:javadocJar :pretender:sourcesJar
 
       - name: Create and push tag
         if: steps.check.outputs.skip == 'false'
-        env:
-          NEW_TAG: ${{ steps.version.outputs.tag }}
-          NEW_VERSION: ${{ steps.version.outputs.version }}
         run: |
-          # Create annotated tag
-          git tag -a "$NEW_TAG" -m "Auto-release $NEW_VERSION"
+          # Create annotated tag after successful build and publish
+          git tag -a "$TAG" -m "Auto-release $VERSION"
+          git push origin "$TAG"
+          echo "Created and pushed tag: $TAG"
 
-          # Push tag to trigger release workflow
-          git push origin "$NEW_TAG"
+      - name: Create GitHub Release
+        if: steps.check.outputs.skip == 'false'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG }}
+          name: Release ${{ env.VERSION }}
+          body: |
+            ## PretenderDB ${{ env.VERSION }}
 
-          echo "Created and pushed tag: $NEW_TAG"
+            ### Maven Central
+
+            ```xml
+            <dependency>
+              <groupId>io.github.pretenderdb</groupId>
+              <artifactId>pretender</artifactId>
+              <version>${{ env.VERSION }}</version>
+            </dependency>
+            ```
+
+            ```gradle
+            implementation("io.github.pretenderdb:pretender:${{ env.VERSION }}")
+            ```
+
+            ### Modules Published
+            - `io.github.pretenderdb:database-utils:${{ env.VERSION }}`
+            - `io.github.pretenderdb:pretender:${{ env.VERSION }}`
+
+            ### What's Changed
+            See commits since last release for details.
+
+            **Note:** Artifacts may take up to 2 hours to appear in Maven Central after release.
+          files: |
+            database-utils/build/libs/*.jar
+            pretender/build/libs/*.jar
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Summary
         if: steps.check.outputs.skip == 'false'
-        env:
-          NEW_TAG: ${{ steps.version.outputs.tag }}
-          NEW_VERSION: ${{ steps.version.outputs.version }}
         run: |
-          echo "## Auto-Release Triggered" >> $GITHUB_STEP_SUMMARY
+          echo "## Auto-Release Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Created tag: \`$NEW_TAG\`" >> $GITHUB_STEP_SUMMARY
+          echo "### Version: \`$VERSION\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "The release workflow will now:" >> $GITHUB_STEP_SUMMARY
-          echo "1. Build and test the project" >> $GITHUB_STEP_SUMMARY
-          echo "2. Publish to Maven Central" >> $GITHUB_STEP_SUMMARY
-          echo "3. Create GitHub release with artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "### Actions Completed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Built and tested the project" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Published to Maven Central" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Created tag: \`$TAG\`" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Created GitHub release" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "View the release workflow: [Release to Maven Central](../../actions/workflows/release.yml)" >> $GITHUB_STEP_SUMMARY
+          echo "### Maven Central" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`gradle" >> $GITHUB_STEP_SUMMARY
+          echo "implementation(\"io.github.pretenderdb:pretender:$VERSION\")" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
 
       - name: Skipped Summary
         if: steps.check.outputs.skip == 'true'
@@ -106,3 +212,8 @@ jobs:
           echo "## Auto-Release Skipped" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Current commit already has a release tag. No action taken." >> $GITHUB_STEP_SUMMARY
+
+      - name: Notify on failure
+        if: failure() && steps.check.outputs.skip == 'false'
+        run: |
+          echo "::error::Auto-release failed! Check logs for details."
