@@ -5,18 +5,25 @@
 assertj = "3.27.6"
 awsSDK = "2.41.8"
 commons-codec = "1.20.0"
+commons-csv = "1.12.0"
 dagger = "2.57.2"
 dropwizard = "5.0.0"
 guava = "33.5.0-jre"
 hsqldb = '2.7.4'
 immutables = '2.12.1'
+ion-java = "1.11.11"
 jackson = '2.20.0'
 jdbi = '3.51.0'
 junit-jupiter = "6.0.2"
 liquibase = '5.0.1'
 micrometer = '1.16.1'
 mokito = '5.21.0'
+<<<<<<< HEAD
 pgjdbc = '42.7.9'
+=======
+pgjdbc = '42.7.8'
+picocli = "4.7.6"
+>>>>>>> 58e870f (Add DynamoDB export/import CLI tool with multi-format support)
 slf4j = '2.0.17'
 rs-api = "4.0.0"
 testcontainers = "1.21.4"
@@ -24,11 +31,13 @@ testcontainers = "1.21.4"
 [libraries]
 assertj = { module = "org.assertj:assertj-core", version.ref = "assertj" }
 aws-sdk-ddb = { module = "software.amazon.awssdk:dynamodb", version.ref = "awsSDK" }
+commons-csv = { module = "org.apache.commons:commons-csv", version.ref = "commons-csv" }
 dagger = { module = "com.google.dagger:dagger", version.ref = "dagger" }
 dagger-compiler = { module = "com.google.dagger:dagger-compiler", version.ref = "dagger" }
 hsqldb = { module = "org.hsqldb:hsqldb", version.ref = "hsqldb" }
 immutables-value = { module = "org.immutables:value", version.ref = "immutables" }
 immutables-annotations = { module = "org.immutables:value-annotations", version.ref = "immutables" }
+ion-java = { module = "com.amazon.ion:ion-java", version.ref = "ion-java" }
 jackson-core = { module = "com.fasterxml.jackson.core:jackson-core", version.ref = "jackson" }
 jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
 jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations", version.ref = "jackson" }
@@ -53,6 +62,7 @@ liquibase-core = { module = "org.liquibase:liquibase-core", version.ref = "liqui
 mockito-core = { module = "org.mockito:mockito-core", version.ref = "mokito" }
 mockito-junit-jupiter = { module = "org.mockito:mockito-junit-jupiter", version.ref = "mokito" }
 pgjdbc = { module = "org.postgresql:postgresql", version.ref = "pgjdbc" }
+picocli = { module = "info.picocli:picocli", version.ref = "picocli" }
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.ref = "testcontainers" }
 testcontainers-junit-jupiter = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
