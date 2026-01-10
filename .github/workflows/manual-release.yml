@@ -1,4 +1,4 @@
-name: Auto Release to Maven Central
+name: Manual Build Release to Maven Central
 
 on:
   workflow_dispatch:

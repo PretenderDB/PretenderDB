@@ -1,4 +1,4 @@
-name: Check for Dependabot
+name: Approve Dependabot Pushes
 on: pull_request
 
 permissions:
