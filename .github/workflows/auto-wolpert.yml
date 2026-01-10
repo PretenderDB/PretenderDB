@@ -1,4 +1,4 @@
-name: Wolpert Check
+name: Approve Wolpert Pushes
 on: pull_request
 
 permissions:
