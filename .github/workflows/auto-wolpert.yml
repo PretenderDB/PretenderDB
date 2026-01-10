@@ -10,13 +10,13 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.pull_request.user.login == 'wolpert'
     steps:
-      - name: auto-approve
-        run: gh pr review --approve "$PR_URL"
+      - name: Enable auto-merge
+        run: gh pr merge --auto --squash --delete-branch "$PR_URL"
         env:
           PR_URL: ${{github.event.pull_request.html_url}}
           GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
-      - name: Enable auto-merge
-        run: gh pr merge --auto --squash "$PR_URL"
+      - name: auto-approve
+        run: gh pr review --approve "$PR_URL"
         env:
           PR_URL: ${{github.event.pull_request.html_url}}
           GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
