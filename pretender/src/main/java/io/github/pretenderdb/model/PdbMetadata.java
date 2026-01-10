@@ -1,5 +1,7 @@
 package io.github.pretenderdb.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -9,6 +11,8 @@ import org.immutables.value.Value;
  * The interface PdbMetadata.
  */
 @Value.Immutable
+@JsonSerialize(as = ImmutablePdbMetadata.class)
+@JsonDeserialize(as = ImmutablePdbMetadata.class)
 public interface PdbMetadata {
 
   /**

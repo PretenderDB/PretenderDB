@@ -20,7 +20,7 @@ plugins {
 }
 
 rootProject.name = "pretenderdb"
-include("pretender", "database-utils", "pretender-integ")
+include("pretender", "database-utils", "pretender-integ", "pretender-cli")
 
 // Configure Central Portal publishing credentials
 nmcpSettings {
