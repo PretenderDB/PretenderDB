@@ -8,15 +8,17 @@ This is a multi-module Gradle project demonstrating a complete Dropwizard server
 
 ### Module Structure
 
-The project consists of 5 modules with specific purposes:
+The project consists of 4 modules with specific purposes:
 
 - **database-utils**: JDBI factory and Liquibase integration utilities
 - **pretender**: DynamoDB-compatible client that uses SQL databases (PostgreSQL/HSQLDB) as backend for local development
+- **pretender-cli**: CLI tool for exporting and importing DynamoDB tables (CSV, DynamoDB JSON, Amazon Ion formats)
 - **pretender-integ**: Testing code that only knows about the DynamoDB client, but can work against any implementation.
 
 Module dependencies:
 ```
 pretender-integ → pretender → database-utils
+pretender-cli → pretender → database-utils
 ```
 
 ### Developer requirements
@@ -186,6 +188,177 @@ The `pretender` module provides a DynamoDB-compatible client backed by SQL:
 - Useful for local development without running actual DynamoDB
 - Has its own standalone Dagger component
 
+## Pretender CLI Tool
+
+The `pretender-cli` module provides a command-line tool for exporting and importing DynamoDB tables in multiple formats.
+
+### Features
+
+- **Export/Import Formats:**
+  - **CSV**: Human-readable format with complex types as JSON strings
+  - **DynamoDB JSON**: AWS S3 Export compatible format
+  - **Amazon Ion**: Ion text format with DynamoDB type annotations
+
+- **Full Backup/Restore**: Exports both table schema (KeySchema, GSIs, TTL, Streams) and all item data
+- **AWS Compatible**: DynamoDB JSON format matches AWS S3 export specification
+- **Memory Efficient**: Streaming architecture handles large tables
+- **Batch Processing**: Uses batch writes with retry logic for imports
+
+### Installation
+
+Build the CLI distribution:
+
+```bash
+./gradlew :pretender-cli:installDist
+```
+
+The CLI will be available at:
+```
+./pretender-cli/build/install/pretender-cli/bin/pretender-cli
+```
+
+### Usage
+
+#### Database Connection
+
+Set database connection via environment variables:
+
+```bash
+export PRETENDER_DB_URL="jdbc:postgresql://localhost:5432/pretenderdb"
+export PRETENDER_DB_USER="user"
+export PRETENDER_DB_PASSWORD="password"
+```
+
+Or pass as command-line arguments:
+```bash
+--db-url jdbc:postgresql://localhost:5432/pretenderdb --db-user user --db-password password
+```
+
+#### Export Commands
+
+Export to DynamoDB JSON (AWS compatible):
+```bash
+pretender-cli export --table MyTable --format DYNAMODB_JSON --output /path/to/export/
+```
+
+Export to CSV:
+```bash
+pretender-cli export --table MyTable --format CSV --output /path/to/export.csv
+```
+
+Export to Amazon Ion:
+```bash
+pretender-cli export --table MyTable --format ION --output /path/to/export/
+```
+
+#### Import Commands
+
+Import from DynamoDB JSON with table creation:
+```bash
+pretender-cli import --table MyTable --format DYNAMODB_JSON --input /path/to/export/ --create-table
+```
+
+Import from CSV:
+```bash
+pretender-cli import --table MyTable --format CSV --input /path/to/export.csv
+```
+
+Import with existing data cleanup:
+```bash
+pretender-cli import --table MyTable --format ION --input /path/to/export/ --clear-existing
+```
+
+#### Command Options
+
+**Export Options:**
+- `--table, -t`: Table name to export (required)
+- `--format, -f`: Export format: CSV, DYNAMODB_JSON, ION (required)
+- `--output, -o`: Output directory or file path (required)
+- `--db-url`: Database JDBC URL (default: env PRETENDER_DB_URL)
+- `--db-user`: Database username (default: env PRETENDER_DB_USER)
+- `--db-password`: Database password (default: env PRETENDER_DB_PASSWORD)
+
+**Import Options:**
+- `--table, -t`: Table name to import into (required)
+- `--format, -f`: Import format: CSV, DYNAMODB_JSON, ION (required)
+- `--input, -i`: Input directory or file path (required)
+- `--db-url`, `--db-user`, `--db-password`: Same as export
+- `--create-table`: Create table from schema if it doesn't exist
+- `--clear-existing`: Delete all existing items before import
+- `--fail-if-exists`: Fail if table already exists (when --create-table is used)
+- `--batch-size`: Batch size for writes (default: 25, max: 25)
+
+### Format Specifications
+
+#### DynamoDB JSON Format
+
+AWS S3 Export compatible format with the following structure:
+
+```
+<output-dir>/
+├── manifest-summary.json      # Export metadata and table schema
+├── manifest-files.json        # List of data files (JSON Lines)
+└── data/
+    ├── item-0001.json.gz      # Gzipped JSON Lines files
+    ├── item-0002.json.gz
+    └── ...
+```
+
+Each item in data files:
+```json
+{"Item":{"id":{"S":"user-123"},"name":{"S":"Alice"},"age":{"N":"30"}}}
+```
+
+#### CSV Format
+
+Simple CSV format with special handling for complex types:
+
+```
+<output-dir>/
+├── MyTable.csv               # Item data
+└── MyTable-schema.json       # Table schema
+```
+
+CSV Features:
+- Header row with attribute names (sorted alphabetically)
+- One row per item
+- Complex types (Map, List) serialized as JSON strings in cells
+- Sets (SS, NS, BS) serialized as JSON arrays
+- Binary (B, BS) Base64-encoded
+- Missing attributes represented as empty cells
+
+#### Amazon Ion Format
+
+Ion text format with type annotations for DynamoDB sets:
+
+```
+<output-dir>/
+├── manifest-summary.json
+├── manifest-files.json
+└── data/
+    ├── item-0001.ion.gz
+    └── ...
+```
+
+Ion Features:
+- Text format for readability
+- Type annotations for DynamoDB sets: `$dynamodb_SS`, `$dynamodb_NS`, `$dynamodb_BS`
+- Numbers as Ion decimals (with `.` suffix)
+- Gzip compression
+
+### Development with Gradle
+
+Run via Gradle:
+```bash
+./gradlew :pretender-cli:run --args="export --table MyTable --format CSV --output /tmp/export.csv"
+```
+
+Create distribution ZIP:
+```bash
+./gradlew :pretender-cli:distZip
+# Output: pretender-cli/build/distributions/pretender-cli-<version>.zip
+```
+
 ## Common Development Workflow
 
 1. Make code changes in appropriate module
@@ -221,7 +394,7 @@ See [RELEASING.md](RELEASING.md) for complete details on:
 - Version is determined by Git tags (format: `vX.Y.Z`)
 - Non-tagged commits use SNAPSHOT versions (e.g., `0.0.1-SNAPSHOT`)
 - Both published modules (`database-utils` and `pretender`) share the same version number
-- `pretender-integ` is not published to Maven Central (integration testing only)
+- `pretender-integ` and `pretender-cli` are not published to Maven Central (testing and CLI tool only)
 - Pre-release tags (e.g., `v1.0.0-rc.1`) create pre-releases on GitHub
 - Semantic versioning:
   - Major (X.0.0): Breaking API changes
@@ -234,7 +407,7 @@ When released, artifacts are published to Maven Central:
 - Group ID: `io.github.pretenderdb`
 - Artifact IDs: `database-utils`, `pretender`
 - Version: Extracted from Git tag
-- Note: `pretender-integ` is not published (testing module only)
+- Note: `pretender-integ` and `pretender-cli` are not published (testing and CLI tool modules only)
 
 Users can depend on the library via Maven or Gradle:
 ```xml
