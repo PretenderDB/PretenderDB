@@ -3,7 +3,7 @@
 
 [versions]
 assertj = "3.27.7"
-awsSDK = "2.41.14"
+awsSDK = "2.41.20"
 commons-codec = "1.20.0"
 commons-csv = "1.14.1"
 dagger = "2.59"

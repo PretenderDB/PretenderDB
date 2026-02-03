@@ -42,7 +42,7 @@ dependencies {
 
     // SLF4J logging (logback is a runtime dependency usually)
     testImplementation(libs.slf4j.api)
-    testRuntimeOnly("ch.qos.logback:logback-classic:1.5.26")
+    testRuntimeOnly("ch.qos.logback:logback-classic:1.5.27")
 
     // Immutables
     testCompileOnly(libs.immutables.annotations)
