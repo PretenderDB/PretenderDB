@@ -3,10 +3,10 @@
 
 [versions]
 assertj = "3.27.7"
-awsSDK = "2.41.20"
+awsSDK = "2.41.24"
 commons-codec = "1.20.0"
 commons-csv = "1.14.1"
-dagger = "2.59"
+dagger = "2.59.1"
 dropwizard = "5.0.0"
 guava = "33.5.0-jre"
 hsqldb = '2.7.4'
