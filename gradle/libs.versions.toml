@@ -3,7 +3,7 @@
 
 [versions]
 assertj = "3.27.7"
-awsSDK = "2.42.4"
+awsSDK = "2.42.8"
 commons-codec = "1.20.0"
 commons-csv = "1.14.1"
 dagger = "2.59.2"
@@ -15,7 +15,7 @@ ion-java = "1.11.11"
 jackson = '2.21.0'
 jdbi = '3.51.0'
 junit-jupiter = "6.0.3"
-liquibase = '5.0.1'
+liquibase = '5.0.2'
 micrometer = '1.16.1'
 mokito = '5.22.0'
 pgjdbc = '42.7.10'
