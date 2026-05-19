@@ -3,24 +3,24 @@
 
 [versions]
 assertj = "3.27.7"
-awsSDK = "2.44.4"
+awsSDK = "2.44.8"
 commons-codec = "1.20.0"
 commons-csv = "1.14.1"
 dagger = "2.59.2"
 dropwizard = "5.0.0"
 guava = "33.5.0-jre"
 hsqldb = '2.7.4'
-immutables = '2.12.1'
+immutables = '2.12.2'
 ion-java = "1.11.11"
 jackson = '2.21.0'
 jdbi = '3.53.0'
 junit-jupiter = "6.0.3"
-liquibase = '5.0.2'
+liquibase = '5.0.3'
 micrometer = '1.16.1'
 mokito = '5.23.0'
 pgjdbc = '42.7.11'
 picocli = "4.7.7"
-slf4j = '2.0.17'
+slf4j = '2.0.18'
 rs-api = "4.0.0"
 testcontainers = "1.21.4"
 
