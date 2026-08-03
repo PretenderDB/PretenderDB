@@ -43,7 +43,7 @@ dependencies {
 
     // Logging
     implementation(libs.slf4j.api)
-    runtimeOnly("ch.qos.logback:logback-classic:1.6.0")
+    runtimeOnly("ch.qos.logback:logback-classic:1.6.1")
 
     // Testing
     testImplementation(libs.bundles.testing)
