@@ -3,7 +3,7 @@
 
 [versions]
 assertj = "3.27.7"
-awsSDK = "2.59.0"
+awsSDK = "2.59.5"
 commons-codec = "1.20.0"
 commons-csv = "1.14.1"
 dagger = "2.60.1"
@@ -11,7 +11,7 @@ dropwizard = "5.0.0"
 guava = "33.5.0-jre"
 hsqldb = '2.7.4'
 immutables = '2.12.3'
-ion-java = "1.12.1"
+ion-java = "1.12.2"
 jackson = '2.23.0'
 jdbi = '3.55.0'
 junit-jupiter = "6.1.3"
